@@ -7,9 +7,11 @@ WORKDIR /app
 
 COPY package*.json ./
 
+# npm ci installe proprement les dépendances de prod
 RUN npm ci --omit=dev
 
-COPY . .
+# Optionnel mais recommandé : On ne copie que app.js si c'est le seul fichier requis
+COPY app.js ./ 
 
 # ============================================
 # STAGE 2 : Production - image finale allégée
@@ -22,10 +24,9 @@ RUN addgroup -g 1001 -S nodejs && \
 
 WORKDIR /app
 
-# Copier uniquement ce qui est nécessaire depuis le stage builder
-COPY --from=builder --chown=nodeapp:nodejs /app/node_modules ./node_modules
-COPY --from=builder --chown=nodeapp:nodejs /app/app.js ./app.js
-COPY --from=builder --chown=nodeapp:nodejs /app/package.json ./package.json
+# ASTUCE : On copie le RÉPERTOIRE /app entier du builder vers le /app de production
+# Cela préserve parfaitement la structure de node_modules, app.js et package.json
+COPY --from=builder --chown=nodeapp:nodejs /app /app
 
 USER nodeapp
 
